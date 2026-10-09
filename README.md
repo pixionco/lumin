@@ -27,7 +27,9 @@ Installs into `%LOCALAPPDATA%\Programs\lumin` and adds it to your user `PATH`. W
 `& ([scriptblock]::Create((irm https://raw.githubusercontent.com/pixionco/lumin/master/install.ps1))) -Version 1.2.0`.
 
 **Manually:** download the archive for your platform from [Releases](https://github.com/pixionco/lumin/releases),
-check it against `SHA256SUMS` and put `lumin` (`lumin.exe`) on your `PATH`.
+check it against `SHA256SUMS` and put `lumin` (`lumin.exe`) on your `PATH`. Windows binaries are not code-signed yet,
+so a browser download may show a SmartScreen prompt on first run (*More info* → *Run anyway*); the install script
+doesn't.
 
 Both scripts verify the archive against `SHA256SUMS` before installing. To install from a mirror or proxy holding the
 same release assets, set `LUMIN_DOWNLOAD_URL` to its base URL.
