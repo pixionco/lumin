@@ -42,6 +42,13 @@ The installers verify every download against the release's `SHA256SUMS`. Asset n
 `https://github.com/pixionco/lumin/releases/latest/download/lumin-linux-x64.tar.gz` always points at the newest
 release.
 
+**Verify a download.** Releases are immutable and GitHub signs an attestation of every asset when the release is
+published. With the [GitHub CLI](https://cli.github.com):
+
+```sh
+gh release verify-asset v1.2.0 lumin-linux-x64.tar.gz --repo pixionco/lumin
+```
+
 ## GitHub Actions
 
 ```yaml
