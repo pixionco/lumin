@@ -1,5 +1,5 @@
-name: Set up Lumin CLI
-description: Install the Lumin CLI (lumin) and add it to PATH, on Linux, macOS and Windows runners.
+name: Lumin CLI
+description: Install the Lumin CLI (lumin) on Linux, macOS and Windows runners and optionally run a Lumin test run.
 author: Pixion
 branding:
   icon: check-circle
@@ -16,6 +16,30 @@ inputs:
     description: Token for the GitHub API lookup of releases (avoids anonymous rate limits).
     required: false
     default: ${{ github.token }}
+  test-run:
+    description: Run this existing Lumin test run (lumin run --test-run). Leave test-run and labels empty to only install.
+    required: false
+    default: ''
+  labels:
+    description: Create a test run from scenarios with these labels and run it (lumin run --create --labels).
+    required: false
+    default: ''
+  run-name:
+    description: Name of the created test run (lumin run --name).
+    required: false
+    default: ''
+  fail-on:
+    description: Outcomes that fail the step, e.g. failed or failed,pending (lumin run --fail-on).
+    required: false
+    default: ''
+  args:
+    description: Extra arguments for lumin run, e.g. --timeout 30m --env BASE_URL=https://staging.example.com.
+    required: false
+    default: ''
+  working-directory:
+    description: Directory to run lumin run in (where lumin.json is found).
+    required: false
+    default: '.'
 
 outputs:
   version:
@@ -75,3 +99,24 @@ runs:
 
         if [ "${RUNNER_OS}" = Windows ]; then cygpath -w "$dir" >> "$GITHUB_PATH"; else echo "$dir" >> "$GITHUB_PATH"; fi
         echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+    - if: inputs.test-run != '' || inputs.labels != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        LUMIN: ${{ steps.install.outputs.dir }}
+        TEST_RUN: ${{ inputs.test-run }}
+        LABELS: ${{ inputs.labels }}
+        RUN_NAME: ${{ inputs.run-name }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        ARGS: ${{ inputs.args }}
+      run: |
+        set -euo pipefail
+        cmd=("$LUMIN/lumin" run)
+        if [ -n "$TEST_RUN" ]; then cmd+=(--test-run "$TEST_RUN"); else cmd+=(--create --labels "$LABELS"); fi
+        if [ -n "$RUN_NAME" ]; then cmd+=(--name "$RUN_NAME"); fi
+        if [ -n "$FAIL_ON" ]; then cmd+=(--fail-on "$FAIL_ON"); fi
+        # ARGS is split on whitespace like a command line; quote-free values only.
+        read -r -a extra <<< "$ARGS"
+        "${cmd[@]}" ${extra[@]+"${extra[@]}"}

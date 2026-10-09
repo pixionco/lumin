@@ -46,12 +46,26 @@ release.
 
 ```yaml
 - uses: pixionco/lumin@v1          # newest 1.x; pin @v1.2.3 for an exact version
-- run: lumin run --create --labels smoke
+  with:
+    labels: smoke                  # create a test run from these labels and run it
   env:
     LUMIN_TOKEN: ${{ secrets.LUMIN_TOKEN }}
 ```
 
-Inputs: `version` (e.g. `1.2.0` or `latest`; default: follows the action ref). Output: `version`.
+Without `test-run` or `labels` the action only installs `lumin` and adds it to `PATH`, so later steps can call any
+command (`- run: lumin sync --check`).
+
+| Input | Meaning |
+|---|---|
+| `version` | `1.2.0` or `latest`; default: follows the action ref (`@v1` → newest 1.x) |
+| `test-run` | run this existing test run (`lumin run --test-run`) |
+| `labels` | create a test run from scenarios with these labels and run it (`lumin run --create --labels`) |
+| `run-name` | name of the created test run |
+| `fail-on` | outcomes that fail the step: `failed` (default) or `failed,pending` |
+| `args` | extra `lumin run` arguments, e.g. `--timeout 30m` |
+| `working-directory` | where to run (the directory with `lumin.json`); default `.` |
+
+Output: `version` (the installed version).
 
 ## Usage
 
