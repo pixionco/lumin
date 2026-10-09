@@ -1,0 +1,8 @@
+Copyright (c) 2026 Pixion. All rights reserved.
+
+The install scripts (install.sh, install.ps1) and the GitHub Action (action.yml) in this repository may be used,
+copied and modified freely to install and run the Lumin CLI.
+
+The Lumin CLI binaries published in this repository's releases are proprietary software of Pixion. You may download,
+install and run them to use the Lumin service, subject to the Lumin terms of service. You may not modify,
+decompile or redistribute them except as part of installing them for your own use.

@@ -1,0 +1,78 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: shellcheck install.sh
+        run: shellcheck install.sh
+
+      - name: Parse install.ps1
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/install.ps1", [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors | ForEach-Object { Write-Error $_.ToString() }; exit 1 }
+
+  # Installs the latest release with each installer; skipped until the first release exists.
+  install:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check for a release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No release yet: install tests skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: install.sh
+        if: steps.release.outputs.exists == 'true'
+        shell: bash
+        run: |
+          sh ./install.sh --install-dir "$RUNNER_TEMP/lumin-sh"
+          "$RUNNER_TEMP/lumin-sh/lumin" --version
+
+      - name: install.ps1
+        if: steps.release.outputs.exists == 'true' && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./install.ps1 -InstallDir "$env:RUNNER_TEMP\lumin-ps" -NoModifyPath
+          & "$env:RUNNER_TEMP\lumin-ps\lumin.exe" --version
+
+      - name: Action
+        if: steps.release.outputs.exists == 'true'
+        id: action
+        uses: ./
+        with:
+          version: latest
+
+      - name: lumin on PATH
+        if: steps.release.outputs.exists == 'true'
+        shell: bash
+        run: test "$(lumin --version | tr -d '\r')" = '${{ steps.action.outputs.version }}'

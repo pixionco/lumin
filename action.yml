@@ -1,0 +1,77 @@
+name: Set up Lumin CLI
+description: Install the Lumin CLI (lumin) and add it to PATH, on Linux, macOS and Windows runners.
+author: Pixion
+branding:
+  icon: check-circle
+  color: purple
+
+inputs:
+  version:
+    description: >
+      lumin version to install, e.g. 1.2.0, or "latest". Default: the newest release matching the action ref
+      (pixionco/lumin@v1 installs the newest 1.x, @v1.2 the newest 1.2.x, @v1.2.3 exactly 1.2.3).
+    required: false
+    default: ''
+  token:
+    description: Token for the GitHub API lookup of releases (avoids anonymous rate limits).
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: The installed lumin version.
+    value: ${{ steps.install.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        ACTION_REF: ${{ github.action_ref }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        api="https://api.github.com/repos/pixionco/lumin/releases"
+        auth=(-H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json")
+
+        version="${INPUT_VERSION#v}"
+        prefix=""
+        if [ -z "$version" ]; then
+          if [[ "$ACTION_REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            version="${ACTION_REF#v}"
+          elif [[ "$ACTION_REF" =~ ^v[0-9]+(\.[0-9]+)?$ ]]; then
+            prefix="$ACTION_REF."
+          else
+            version=latest
+          fi
+        fi
+
+        if [ -n "$prefix" ]; then
+          tag=$(curl -fsSL "${auth[@]}" "$api?per_page=100" \
+            | jq -r --arg p "$prefix" '[.[] | select((.draft or .prerelease) | not) | .tag_name | select(startswith($p))][0] // empty')
+          [ -n "$tag" ] || { echo "::error::No lumin release matches $ACTION_REF"; exit 1; }
+          version="${tag#v}"
+        elif [ "$version" = latest ]; then
+          version=$(curl -fsSL "${auth[@]}" "$api/latest" | jq -r .tag_name)
+          version="${version#v}"
+        fi
+
+        tool_cache="${RUNNER_TOOL_CACHE:-$RUNNER_TEMP}"
+        if [ "${RUNNER_OS}" = Windows ]; then
+          tool_cache=$(cygpath -u "$tool_cache")
+          exe=lumin.exe
+        else
+          exe=lumin
+        fi
+        dir="$tool_cache/lumin/$version/$RUNNER_ARCH"
+
+        if [ -x "$dir/$exe" ]; then
+          echo "lumin $version found in the tool cache"
+        else
+          sh "$GITHUB_ACTION_PATH/install.sh" --version "$version" --install-dir "$dir"
+        fi
+
+        if [ "${RUNNER_OS}" = Windows ]; then cygpath -w "$dir" >> "$GITHUB_PATH"; else echo "$dir" >> "$GITHUB_PATH"; fi
+        echo "version=$version" >> "$GITHUB_OUTPUT"
