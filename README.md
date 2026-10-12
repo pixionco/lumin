@@ -26,6 +26,12 @@ irm https://raw.githubusercontent.com/pixionco/lumin/master/install.ps1 | iex
 Installs into `%LOCALAPPDATA%\Programs\lumin` and adds it to your user `PATH`. With options:
 `& ([scriptblock]::Create((irm https://raw.githubusercontent.com/pixionco/lumin/master/install.ps1))) -Version 1.2.0`.
 
+Or install with WinGet:
+
+``powershell
+winget install --id Pixion.Lumin.Cli --exact
+``
+
 **Manually:** download the archive for your platform from [Releases](https://github.com/pixionco/lumin/releases),
 check it against `SHA256SUMS` and put `lumin` (`lumin.exe`) on your `PATH`. Windows binaries are not code-signed yet,
 so a browser download may show a SmartScreen prompt on first run (*More info* → *Run anyway*); the install script
