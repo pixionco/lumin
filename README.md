@@ -9,6 +9,17 @@ self-contained executable; nothing else (no .NET, Node or Python) needs to be in
 
 ## Install
 
+| Channel | Platform | Install | Version |
+|---|---|---|---|
+| Install script | Linux, macOS | `curl -fsSL https://raw.githubusercontent.com/pixionco/lumin/master/install.sh \| sh` | ![release](https://img.shields.io/github/v/release/pixionco/lumin) |
+| Install script | Windows | `irm https://raw.githubusercontent.com/pixionco/lumin/master/install.ps1 \| iex` | ![release](https://img.shields.io/github/v/release/pixionco/lumin) |
+| Homebrew | macOS, Linux | `brew install pixionco/tap/lumin-cli` | ![release](https://img.shields.io/github/v/release/pixionco/lumin) |
+| Scoop | Windows | `scoop bucket add pixionco https://github.com/pixionco/scoop-bucket`, then `scoop install pixionco/lumin-cli` | ![scoop](https://img.shields.io/scoop/v/lumin-cli?bucket=https://github.com/pixionco/scoop-bucket) |
+| GitHub Action | CI | `uses: pixionco/lumin@v1` ([below](#github-actions)) | ![release](https://img.shields.io/github/v/release/pixionco/lumin) |
+| Manual | all | [Releases](https://github.com/pixionco/lumin/releases) + `SHA256SUMS` | ![release](https://img.shields.io/github/v/release/pixionco/lumin) |
+
+Package managers that review every version can lag behind a release; the install scripts always get the newest one.
+
 **Linux, macOS** (and Git Bash on Windows):
 
 ```sh
@@ -26,16 +37,25 @@ irm https://raw.githubusercontent.com/pixionco/lumin/master/install.ps1 | iex
 Installs into `%LOCALAPPDATA%\Programs\lumin` and adds it to your user `PATH`. With options:
 `& ([scriptblock]::Create((irm https://raw.githubusercontent.com/pixionco/lumin/master/install.ps1))) -Version 1.2.0`.
 
-Or install with WinGet:
+**Homebrew** (macOS, Linux):
 
-```powershell
-winget install --id Pixion.Lumin.Cli --exact
+```sh
+brew install pixionco/tap/lumin-cli
 ```
 
+**Scoop** (Windows, no admin rights needed):
+
+```powershell
+scoop bucket add pixionco https://github.com/pixionco/scoop-bucket
+scoop install pixionco/lumin-cli
+```
+
+A package manager owns its install, so update with it (`brew upgrade lumin-cli`, `scoop update lumin-cli`, ...);
+`lumin upgrade` prints the right command.
+
 **Manually:** download the archive for your platform from [Releases](https://github.com/pixionco/lumin/releases),
-check it against `SHA256SUMS` and put `lumin` (`lumin.exe`) on your `PATH`. Windows binaries are not code-signed yet,
-so a browser download may show a SmartScreen prompt on first run (*More info* → *Run anyway*); the install script
-doesn't.
+check it against `SHA256SUMS` and put `lumin` (`lumin.exe`) on your `PATH`. Windows binaries are code-signed by
+PIXION d.o.o. (from v0.2.0).
 
 Both scripts verify the archive against `SHA256SUMS` before installing. To install from a mirror or proxy holding the
 same release assets, set `LUMIN_DOWNLOAD_URL` to its base URL.
